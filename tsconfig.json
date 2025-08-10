@@ -17,6 +17,5 @@
     "lib": ["ESNext", "DOM"],
     "noImplicitAny": true
   },
-  "include": ["src", "plugins", "vite.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src", "tests", "vitest.config.ts"],
 }

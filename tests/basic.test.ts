@@ -19,7 +19,7 @@ describe('auto-preload plugin', () => {
     it('should not modify html if ctx.bundle is missing', () => {
         const plugin = autoPreload()
         const html = '<html><head></head><body></body></html>'
-        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined, html, undefined)
+        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, undefined as any)
         expect(result).toBe(html)
     })
 
@@ -31,7 +31,7 @@ describe('auto-preload plugin', () => {
                 'main.js': { type: 'chunk', fileName: 'main.js', imports: [] }
             }
         }
-        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined, html, ctx as any)
+        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
         expect(result).toBe(html)
     })
 
@@ -44,7 +44,7 @@ describe('auto-preload plugin', () => {
                 'font.woff2': { type: 'asset', fileName: 'font.woff2', source: Buffer.alloc(500) }
             }
         }
-        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined, html, ctx as any)
+        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
         expect(result).toContain('<link rel="preload" href="/font.woff2" as="font" crossorigin>')
     })
 
@@ -58,7 +58,7 @@ describe('auto-preload plugin', () => {
                 'font.woff2': { type: 'asset', fileName: 'font.woff2', source: Buffer.alloc(500) }
             }
         }
-        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined, html, ctx as any)
+        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
         expect(result).toContain('<link rel="preload" href="/image.png" as="image">')
         expect(result).not.toContain('font.woff2')
     })
@@ -76,7 +76,7 @@ describe('auto-preload plugin', () => {
                 'bg.png': { type: 'asset', fileName: 'bg.png', source: Buffer.alloc(500) }
             }
         }
-        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined, html, ctx as any)
+        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
         expect(result).toContain('<link rel="preload" href="/bg.png" as="image">')
     })
 })

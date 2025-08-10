@@ -1,0 +1,29 @@
+{
+  "name": "vite-plugin-auto-preload",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "vite",
+    "plugin",
+    "preload",
+    "performance",
+    "optimization"
+  ],
+  "author": "Erik GS (https://github.com/ErikGS)",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.1",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.1",
+    "vitest": "^3.2.4"
+  }
+}

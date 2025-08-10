@@ -1,66 +1,88 @@
 import type { IndexHtmlTransformContext, Plugin } from 'vite'
 import type { OutputChunk, OutputAsset } from 'rollup'
 
+/**
+ * Options for the auto-preload plugin.
+ * @property maxSizeKB - Maximum asset size (in KB) to preload. Default: 200.
+ * @property extensions - RegExp to match asset file extensions for preloading. Default: woff2? | ttf | otf | png | jpe?g | gif | svg | webp | mp4 | webm
+ */
 export interface AutoPreloadOptions {
   maxSizeKB?: number
   extensions?: RegExp
 }
 
+/**
+ * Vite plugin to automatically inject \<link rel="preload"> tags for assets
+ * referenced in initial chunks and CSS, optimizing page load performance.
+ *
+ * @param options - Configuration for asset size and extensions.
+ * @returns Vite Plugin object.
+ */
 export default function autoPreload(options: AutoPreloadOptions = {}): Plugin {
   const { maxSizeKB = 200, extensions = /\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|mp4|webm)$/i } = options
 
   return {
     name: 'vite-plugin-auto-preload',
-    enforce: 'post',
+    enforce: 'post', // Run after other HTML transforms
     apply: 'build',
+
     transformIndexHtml(html?: string, ctx?: IndexHtmlTransformContext) {
-      if (!ctx?.bundle) return html
+      if (!ctx?.bundle) return html // Only run during build with bundle info
       if (!html) return undefined
 
       const bundle = ctx.bundle as Record<string, OutputChunk | OutputAsset>
 
+      // Find initial files referenced in HTML (chunks and CSS)
       const initialFiles = Object.values(bundle)
         .filter((file) => {
-          if (file.type === 'chunk' && html.includes(file.fileName)) {
-            return true
-          }
-          if (file.type === 'asset' && file.fileName.endsWith('.css') && html.includes(file.fileName)) {
-            return true
-          }
+          // Chunks referenced by <script src="...">
+          if (file.type === 'chunk' && html.includes(file.fileName)) return true
+          // CSS assets referenced by <link href="...">
+          if (file.type === 'asset' && file.fileName.endsWith('.css') && html.includes(file.fileName)) return true
           return false
         })
         .map((file) => file.fileName)
 
       const usedAssets = new Set<string>()
 
+      // Collect assets imported by initial chunks and CSS
       initialFiles.forEach((fileName) => {
         const file = bundle[fileName]
         if (!file) return
 
+        // For JS chunks, add imported assets matching extensions
         if (file.type === 'chunk') {
-          const chunk = file as OutputChunk
-          chunk.imports.forEach((importName) => {
-            const asset = bundle[importName]
-            if (asset && asset.type === 'asset' && extensions.test(asset.fileName)) {
-              usedAssets.add(asset.fileName)
+          file.imports?.forEach((imported) => {
+            const importedFile = bundle[imported]
+            if (
+              importedFile &&
+              importedFile.type === 'asset' &&
+              extensions.test(importedFile.fileName)
+            ) {
+              usedAssets.add(importedFile.fileName)
             }
           })
         }
 
-        if (file.type === 'asset' && file.fileName.endsWith('.css') && typeof file.source === 'string') {
-          const cssUrls = Array.from(file.source.matchAll(/url\(["']?([^"')]+)["']?\)/g))
-            .map((match) => match[1])
-            .filter((url) => extensions.test(url))
-          cssUrls.forEach((url) => {
-            const cleanUrl = url.split('?')[0].split('#')[0]
-            const assetPath = cleanUrl.startsWith('/') ? cleanUrl.slice(1) : cleanUrl
-            if (bundle[assetPath]) {
-              usedAssets.add(assetPath)
+        // For CSS, extract asset URLs from CSS source
+        if (
+          file.type === 'asset' &&
+          file.fileName.endsWith('.css') &&
+          typeof file.source === 'string'
+        ) {
+          const urlRegex = /url\((['"]?)([^'")]+)\1\)/g
+          let match
+          while ((match = urlRegex.exec(file.source)) !== null) {
+            const assetUrl = match[2]
+            const assetName = assetUrl.replace(/^\//, '')
+            if (extensions.test(assetName) && bundle[assetName]) {
+              usedAssets.add(assetName)
             }
-          })
+          }
         }
       })
 
+      // Generate preload links for assets under maxSizeKB
       const preloadLinks = Array.from(usedAssets)
         .filter((fileName) => {
           const asset = bundle[fileName] as OutputAsset | undefined
@@ -69,6 +91,7 @@ export default function autoPreload(options: AutoPreloadOptions = {}): Plugin {
           return sizeKB <= maxSizeKB
         })
         .map((fileName) => {
+          // Determine asset type for 'as' attribute
           let asType = 'fetch'
           if (/\.(woff2?|ttf|otf)$/i.test(fileName)) asType = 'font'
           if (/\.(png|jpe?g|gif|svg|webp)$/i.test(fileName)) asType = 'image'
@@ -78,6 +101,7 @@ export default function autoPreload(options: AutoPreloadOptions = {}): Plugin {
         })
         .join('\n')
 
+      // Inject preload links before </head> if there are links to add
       if (!preloadLinks) return html
       return html.replace('</head>', `${preloadLinks}\n</head>`)
     },

@@ -1,4 +1,6 @@
 # vite-plugin-auto-preload
+[![CI](https://github.com/ErikGS/vite-plugin-auto-preload/actions/workflows/ci.yml/badge.svg)](https://github.com/ErikGS/vite-plugin-auto-preload/actions/workflows/ci.yml)
+[![CD](https://github.com/ErikGS/vite-plugin-auto-preload/actions/workflows/cd.yml/badge.svg)](https://github.com/ErikGS/vite-plugin-auto-preload/actions/workflows/cd.yml)
 
 Vite plugin to automatically inject `<link rel="preload">` tags for assets referenced in initial chunks and CSS, optimizing page load performance.
 

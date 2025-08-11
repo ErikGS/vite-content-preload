@@ -22,7 +22,7 @@ export default function autoPreload(options: AutoPreloadOptions = {}): Plugin {
   const { maxSizeKB = 200, extensions = /\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|mp4|webm)$/i } = options
 
   return {
-    name: 'vite-plugin-auto-preload',
+    name: 'vite-content-preload',
     enforce: 'post', // Run after other HTML transforms
     apply: 'build',
 

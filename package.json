@@ -1,5 +1,5 @@
 {
-  "name": "vite-plugin-auto-preload",
+  "name": "vite-content-preload",
   "version": "1.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

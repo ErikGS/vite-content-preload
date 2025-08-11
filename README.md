@@ -1,6 +1,6 @@
-# vite-plugin-auto-preload
-[![CI](https://github.com/ErikGS/vite-plugin-auto-preload/actions/workflows/ci.yml/badge.svg)](https://github.com/ErikGS/vite-plugin-auto-preload/actions/workflows/ci.yml)
-[![CD](https://github.com/ErikGS/vite-plugin-auto-preload/actions/workflows/cd.yml/badge.svg)](https://github.com/ErikGS/vite-plugin-auto-preload/actions/workflows/cd.yml)
+# vite-content-preload
+[![CI](https://github.com/ErikGS/vite-content-preload/actions/workflows/ci.yml/badge.svg)](https://github.com/ErikGS/vite-content-preload/actions/workflows/ci.yml)
+[![CD](https://github.com/ErikGS/vite-content-preload/actions/workflows/cd.yml/badge.svg)](https://github.com/ErikGS/vite-content-preload/actions/workflows/cd.yml)
 
 Vite plugin to automatically inject `<link rel="preload">` tags for assets referenced in initial chunks and CSS, optimizing page load performance.
 
@@ -16,7 +16,7 @@ See [How it works](#how-it-works).
 ## Installation
 
 ```bash
-npm install vite-plugin-auto-preload --save-dev
+npm install vite-content-preload --save-dev
 ```
 
 ## Usage
@@ -24,7 +24,7 @@ npm install vite-plugin-auto-preload --save-dev
 Add the plugin to your `vite.config.ts`:
 
 ```typescript
-import autoPreload from 'vite-plugin-auto-preload'
+import autoPreload from 'vite-content-preload'
 
 export default {
   plugins: [

@@ -10,7 +10,7 @@ describe('auto-preload plugin', () => {
 
     it('should return a plugin object with required properties', () => {
         const plugin = autoPreload()
-        expect(plugin).toHaveProperty('name', 'vite-plugin-auto-preload')
+        expect(plugin).toHaveProperty('name', 'vite-content-preload')
         expect(plugin).toHaveProperty('enforce', 'post')
         expect(plugin).toHaveProperty('apply', 'build')
         expect(typeof plugin.transformIndexHtml).toBe('function')

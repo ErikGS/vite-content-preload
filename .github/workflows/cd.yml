@@ -1,0 +1,67 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [created]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Adiciona permissão de escrita para o GITHUB_TOKEN
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org/'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # Only create GitHub release if triggered by release event
+      - name: Create GitHub Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          body: |
+            🚀 Release notes for this version
+            - Automatically detects external fonts, images, and media in your Vite project  
+            - Automatically adds `<link rel="preload">` tags to boost loading performance  
+            - Works with both JavaScript and TypeScript project
+
+            Made with ❤️ and ☕ by [Erik GS](https://github.com/ErikGS).
+
+            💖 Support my work → [Sponsor me on GitHub](https://github.com/sponsors/ErikGS)
+
+      - name: Publish to npm
+        run: |
+          if [[ "$GITHUB_REF_NAME" == *alpha* ]]; then
+            npm publish --access public --tag alpha
+          elif [[ "$GITHUB_REF_NAME" == *beta* ]]; then
+            npm publish --access public --tag beta
+          elif [[ "$GITHUB_REF_NAME" == *rc* ]]; then
+            npm publish --access public --tag next
+          else
+            npm publish --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

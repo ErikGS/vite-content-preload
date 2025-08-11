@@ -62,6 +62,18 @@ export default function autoPreload(options: AutoPreloadOptions = {}): Plugin {
               usedAssets.add(importedFile.fileName)
             }
           })
+          // Extract asset URLs from JS chunk source
+          if (typeof file.code === 'string') {
+            const urlRegex = /url\((['"]?)([^'")]+)\1\)/g
+            let match
+            while ((match = urlRegex.exec(file.code)) !== null) {
+              const assetUrl = match[2] // Acessa o grupo capturado que contém o URL
+              const assetName = assetUrl.replace(/^\//, '') // Remove a barra inicial
+              if (extensions.test(assetName) && bundle[assetName]) {
+                usedAssets.add(assetName)
+              }
+            }
+          }
         }
 
         // For CSS, extract asset URLs from CSS source

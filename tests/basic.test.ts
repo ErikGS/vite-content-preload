@@ -79,4 +79,21 @@ describe('auto-preload plugin', () => {
         const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
         expect(result).toContain('<link rel="preload" href="/bg.png" as="image">')
     })
+
+    it('should extract asset urls from JS chunk source', () => {
+        const plugin = autoPreload()
+        const html = '<html><head><script src="main.js"></script></head><body></body></html>'
+        const ctx = {
+            bundle: {
+                'main.js': {
+                    type: 'chunk',
+                    fileName: 'main.js',
+                    code: 'const img = "url(\'/image-in-js.png\')";'
+                },
+                'image-in-js.png': { type: 'asset', fileName: 'image-in-js.png', source: Buffer.alloc(500) }
+            }
+        }
+        const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
+        expect(result).toContain('<link rel="preload" href="/image-in-js.png" as="image">')
+    })
 })

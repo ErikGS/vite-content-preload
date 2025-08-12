@@ -109,7 +109,7 @@ export default function autoPreload(options: AutoPreloadOptions = {}): Plugin {
           if (/\.(png|jpe?g|gif|svg|webp)$/i.test(fileName)) asType = 'image'
           if (/\.(mp4|webm)$/i.test(fileName)) asType = 'video'
           const crossorigin = asType === 'font' ? ' crossorigin' : ''
-          return `<link rel="preload" href="/${fileName}" as="${asType}"${crossorigin}>`
+          return `<link rel="preload" href="${fileName.startsWith('..') ? fileName : `/${fileName}`}" as="${asType}"${crossorigin}>`
         })
         .join('\n')
 

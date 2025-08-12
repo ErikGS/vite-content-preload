@@ -71,13 +71,15 @@ describe('auto-preload plugin', () => {
                 'styles.css': {
                     type: 'asset',
                     fileName: 'styles.css',
-                    source: 'body{background:url("bg.png");}'
+                    source: 'body{background:url("bg.png"); foreground:url("../img/fg.png");}'
                 },
-                'bg.png': { type: 'asset', fileName: 'bg.png', source: Buffer.alloc(500) }
+                'bg.png': { type: 'asset', fileName: 'bg.png', source: Buffer.alloc(500) },
+                '../img/fg.png': { type: 'asset', fileName: 'fg.png', source: Buffer.alloc(500) }
             }
         }
         const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
         expect(result).toContain('<link rel="preload" href="/bg.png" as="image">')
+        expect(result).toContain('<link rel="preload" href="../img/fg.png" as="image">')
     })
 
     it('should extract asset urls from JS chunk source', () => {

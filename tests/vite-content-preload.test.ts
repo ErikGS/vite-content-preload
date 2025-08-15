@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { IndexHtmlTransformHook } from 'vite'
 import autoPreload, { AutoPreloadOptions } from '../src/index'
 
-
-describe('auto-preload plugin', () => {
+describe('vite-content-preload', () => {
     it('should export a function', () => {
         expect(typeof autoPreload).toBe('function')
     })
@@ -74,12 +73,12 @@ describe('auto-preload plugin', () => {
                     source: 'body{background:url("bg.png"); foreground:url("../img/fg.png");}'
                 },
                 'bg.png': { type: 'asset', fileName: 'bg.png', source: Buffer.alloc(500) },
-                '../img/fg.png': { type: 'asset', fileName: 'fg.png', source: Buffer.alloc(500) }
+                'fg.png': { type: 'asset', fileName: 'fg.png', source: Buffer.alloc(500) }
             }
         }
         const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
         expect(result).toContain('<link rel="preload" href="/bg.png" as="image">')
-        expect(result).toContain('<link rel="preload" href="../img/fg.png" as="image">')
+        expect(result).toContain('<link rel="preload" href="/fg.png" as="image">')
     })
 
     it('should extract asset urls from JS chunk source', () => {
@@ -90,12 +89,14 @@ describe('auto-preload plugin', () => {
                 'main.js': {
                     type: 'chunk',
                     fileName: 'main.js',
-                    code: 'const img = "url(\'/image-in-js.png\')";'
+                    code: 'const img = "url(\'/image-in-js.png\')"; const img = "url(\'../img/image-in-js-2.png\')";'
                 },
-                'image-in-js.png': { type: 'asset', fileName: 'image-in-js.png', source: Buffer.alloc(500) }
+                'image-in-js.png': { type: 'asset', fileName: 'image-in-js.png', source: Buffer.alloc(500) },
+                'image-in-js-2.png': { type: 'asset', fileName: 'image-in-js-2.png', source: Buffer.alloc(500) }
             }
         }
         const result = (plugin.transformIndexHtml as IndexHtmlTransformHook).call(undefined as any, html, ctx as any)
         expect(result).toContain('<link rel="preload" href="/image-in-js.png" as="image">')
+        expect(result).toContain('<link rel="preload" href="/image-in-js-2.png" as="image">')
     })
 })

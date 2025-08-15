@@ -1,9 +1,4 @@
-# vite-content-preload
-
-[![CI](https://github.com/ErikGS/vite-content-preload/actions/workflows/ci.yml/badge.svg)](https://github.com/ErikGS/vite-content-preload/actions/workflows/ci.yml)
-[![CD](https://github.com/ErikGS/vite-content-preload/actions/workflows/cd.yml/badge.svg)](https://github.com/ErikGS/vite-content-preload/actions/workflows/cd.yml)
-
-## Example
+# Example
 
 Given this Vue template:
 

@@ -11,6 +11,7 @@ import { createLogger } from 'vite'
 export interface AutoPreloadOptions {
   maxSizeKB?: number
   extensions?: RegExp
+  preloadAll?: boolean
   verbose?: boolean
 }
 
@@ -27,6 +28,7 @@ export default function autoPreload(
   const {
     maxSizeKB = 200,
     extensions = /\.(woff2?|ttf|otf|midi?|ogg|mp3|png|jpe?g|gif|svg|webp|mp4|webm)$/i,
+    preloadAll = false,
     verbose = false
   } = options
 
@@ -59,108 +61,104 @@ export default function autoPreload(
 
       const usedAssets = new Set<string>()
       const bundle = ctx.bundle as Record<string, OutputChunk | OutputAsset>
-
-      const initialFiles = Object.values(bundle)
-        .filter((file) => {
-          if (file.type === 'chunk' && html.includes(file.fileName)) return true
-          if (file.type === 'asset' && file.fileName.endsWith('.css') && html.includes(file.fileName)) return true
-          return false
-        })
-        .map((file) => file.fileName)
+      //const htmlAssetRegex = /<(?:img|video|source|link)[^>]+(?:src|href)=["']([^"']+)["']/g
 
       const findBundleAsset = (name: string) => {
         // Normalize asset name by removing potential path prefixes
-        const normalizedName = name.replace(/^\.\.?\//, '')
-        return Object.entries(bundle).find(([_, f]) =>
-          f.type === 'asset' && f.fileName.endsWith(normalizedName)
+        const normalizedName = name?.replace(/^\.\.?\//, '')
+        return Object.entries(bundle).find(([_, file]) =>
+          file.type === 'asset' && file.fileName.endsWith(normalizedName)
         )?.[1] as OutputAsset | undefined
       }
-      
-      log('⚙️  Initial files:', initialFiles)
 
-      // Looks for assets in bundle
-      initialFiles.forEach((fileName) => {
-        const file = bundle[fileName]
-        if (!file) return
-
-        // Collect JS assets
-        if (file.type === 'chunk') {
-          const chunk = file as OutputChunk & { importedAssets?: Set<string> }
-          log('🔍 Chunk:', fileName, 'importedAssets:', chunk.importedAssets ? Array.from(chunk.importedAssets) : 'none')
-          
-          // Collect JS bundled assets (e.g., import img from './img.png')
-          chunk.importedAssets?.forEach((assetFileName: string) => {
-            const asset = findBundleAsset(assetFileName)
-            log('🔍 Imported asset:', assetFileName, 'bundled:', !!asset, 'fileName:', asset?.fileName)
-            if (extensions.test(assetFileName) && asset) {
-              usedAssets.add(asset.fileName)
-            }
+      // Looks for assets in the bundle
+      if (preloadAll) {
+        // Lookup for all assets in bundle
+        log('⚙️  Full-scan: will scan every asset (⚠️ Use ONLY for debugging!)')
+        Object.entries(bundle).forEach(([fileName, file]) => {
+          if (file.type === 'asset' && extensions.test(fileName)) {
+            usedAssets.add(fileName)
+            log('🔍 Asset (full-scan):', fileName, '(✅ Collected)')
+          } else log('🔍 Asset (full-scan):', fileName, '(❌ Skipped, blacklisted)')
+        })
+      } else {
+        // Lookup for assets in initial chunks only
+        const initialChunks = Object.values(bundle)
+          .filter((file) => {
+            if (file.type === 'chunk' && html.includes(file.fileName)) return true
+            if (file.type === 'asset' && file.fileName.endsWith('.css') && html.includes(file.fileName)) return true
+            return false
           })
+          .map((file) => file.fileName)
 
-          // Collect JS raw url() assets (e.g., url('./img.png'))
-          if (typeof file.code === 'string') {
+        log('⚙️  Initial chunks:', initialChunks)
+
+        initialChunks.forEach((fileName) => {
+          const file = bundle[fileName]
+          if (!file) return
+
+          // Collect bundled assets from initial JS chunks
+          if (file.type === 'chunk') {
+            const staticUrlRegex = /\/assets\/[^"']+/g
+            const staticAssets = new Set<OutputAsset | undefined>()
+            const chunk = file as OutputChunk
+            
+            // Looks for JS static imported assets
+            let match
+            while ((match = staticUrlRegex.exec(chunk.code)) !== null) {
+              const assetUrl = match[0]
+              staticAssets.add(findBundleAsset(assetUrl?.replace(/^.*[\\/]/, '')))
+            }
+
+            log(`🔍 Chunk: ${fileName}, dynamic-assets:`, chunk.imports?.length ? chunk.imports : 'none', ', static-assets:', Array.from(Array.from(staticAssets).map(asset => asset?.fileName)) ?? 'none')
+
+            // Collect JS static imported assets
+            staticAssets.forEach((asset) => {
+              if (asset && extensions.test(asset.fileName)) {
+                usedAssets.add(asset.fileName)
+                log(`🔍 Asset (${fileName} static):`, asset.fileName, '(✅ Collected)')
+              } else log(`🔍 Asset (${fileName} static):`, asset?.fileName, '(❌ Skipped, blacklisted)')
+            })
+
+            // Collect JS dynamic imported assets
+            chunk.imports?.forEach((assetFileName: string) => {
+              const asset = findBundleAsset(assetFileName)
+              if (asset && extensions.test(asset.fileName)) {
+                usedAssets.add(asset.fileName)
+                log(`🔍 Asset (${fileName} dynamic):`, assetFileName, '(✅ Collected)')
+              } else log(`🔍 Asset (${fileName} dynamic):`, assetFileName, '(❌ Skipped, blacklisted)')
+            })
+          }
+
+          // Collect bundled assets from initial CSS chunks
+          if (file.type === 'asset' && file.fileName.endsWith('.css') && typeof file.source === 'string') {
+            log('🔍 Chunk:', fileName)
             const urlRegex = /url\((['"]?)([^'")]+)\1\)/g
             let match
-            while ((match = urlRegex.exec(file.code)) !== null) {
+            while ((match = urlRegex.exec(file.source)) !== null) {
               const assetUrl = match[2]
-              const assetName = assetUrl.replace(/^\//, '')
-              const asset = findBundleAsset(assetName)
-              log('🔍 JS url():', assetName, 'bundled:', !!asset, 'fileName:', asset?.fileName)
-              if (extensions.test(assetName) && asset) {
+              const asset = findBundleAsset(assetUrl.replace(/^.*[\\/]/, ''))
+              if (asset && extensions.test(asset.fileName)) {
                 usedAssets.add(asset.fileName)
-              }
+                log(`🔍 Asset (${fileName}):`, asset.fileName, '(✅ Collected)')
+              } else log(`🔍 Asset (${fileName}):`, asset?.fileName ?? assetUrl, '(❌ Skipped, blacklisted)')
             }
           }
-        }
-
-        // Collect CSS assets
-        if (file.type === 'asset' && file.fileName.endsWith('.css') && typeof file.source === 'string') {
-          const urlRegex = /url\((['"]?)([^'")]+)\1\)/g
-          let match
-          while ((match = urlRegex.exec(file.source)) !== null) {
-            const assetUrl = match[2]
-            const assetName = assetUrl.replace(/^\//, '')
-            const asset = findBundleAsset(assetName)
-            log('🔍 CSS url():', assetName, 'bundled:', !!asset, 'fileName:', asset?.fileName)
-            if (extensions.test(assetName) && asset) {
-              usedAssets.add(asset.fileName)
-            }
-          }
-        }
-      })
-
-      // Additional lookup for assets in bundle
-      Object.entries(bundle).forEach(([fileName, file]) => {
-        if (file.type === 'asset' && extensions.test(fileName)) {
-          log('🔍 Bundle asset:', fileName)
-          usedAssets.add(fileName)
-        }
-      })
-
-      // Looks for assets in HTML
-      const htmlAssetRegex = /<(?:img|source|link)[^>]+(?:src|href)=["']([^"']+)["']/g
-      let htmlMatch
-      while ((htmlMatch = htmlAssetRegex.exec(html)) !== null) {
-        const assetPath = htmlMatch[1].replace(/^\//, '')
-        const asset = findBundleAsset(assetPath)
-        log('🔍 HTML asset:', assetPath, 'bundled:', !!asset, 'fileName:', asset?.fileName)
-        if (extensions.test(assetPath) && asset) {
-          usedAssets.add(asset.fileName)
-        }
+        })
       }
 
-      // Builds preload links for collected assets
+      // Builds preload links for the collected assets
       const preloadLinks = Array.from(usedAssets)
         .filter((fileName) => {
-          const asset = findBundleAsset(fileName) || (bundle[fileName] as OutputAsset | undefined)
-          if (!asset || !asset.source) {
-            warn('⚠️ Skipping, not found in bundle:', fileName)
-            return false
+          const asset = findBundleAsset(fileName)
+          if (asset && asset.source) {
+            const sizeKB = asset?.source.length / 1024
+            const ok = sizeKB <= maxSizeKB
+            warn(`📦 ${fileName}: ${sizeKB.toFixed(1)} KB`, ok ? '(✅ Preloaded)' : '(❌ Skipped, too large)')
+            return ok
           }
-          const sizeKB = asset.source.length / 1024
-          const ok = sizeKB <= maxSizeKB
-            warn(`📦 ${fileName}: ${sizeKB.toFixed(1)} KB`, ok ? '(✅ Collected)' : '(❌ Skipped, too large)')
-          return ok
+          warn('⚠️  Not in bundle:', fileName)
+          return true
         })
         .map((fileName) => {
           let asType = 'fetch'
@@ -182,7 +180,7 @@ export default function autoPreload(
       
       logger.info('')
 
-      return html.replace('</head>', `${preloadLinks}\n</head>`)
+      return html.replace('</head>', `  ${preloadLinks}\n</head>`)
     }
   }
 }

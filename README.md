@@ -101,3 +101,5 @@ MIT
 ---
 
 Made with ❤️ and ☕ by [Erik GS](https://github.com/ErikGS)
+
+💖 Support my work → [Sponsor me on GitHub](https://github.com/sponsors/ErikGS)

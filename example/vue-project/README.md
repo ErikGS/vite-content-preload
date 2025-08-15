@@ -41,3 +41,5 @@ The vite-content-preload plugin will inject inside `<head> </head>` of Vite's ge
 ---
 
 Made with ❤️ and ☕ by [Erik GS](https://github.com/ErikGS)
+
+💖 Support my work → [Sponsor me on GitHub](https://github.com/sponsors/ErikGS)

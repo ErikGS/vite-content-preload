@@ -4,9 +4,10 @@ import { createLogger } from 'vite'
 
 /**
  * Customizable options for the vite-auto-preload plugin.
- * @property **maxSizeKB** - Maximum asset size in KB to preload. _(**Default:** 200. Beware to not overload the network!)._
- * @property **extensions** - RegExp to match asset file extensions for preloading. _(**Default:** woff2? | ttf | otf | midi? | ogg | mp3 | png | jpe?g | gif | svg | webp | mp4 | webm)._
- * @property **verbose** - Enable detailed logging for debugging. _(**Default:** false)._
+ * @property **maxSizeKB** - Maximum asset size in KB to preload _(**Default:** 200. Beware to not overload the network!)._
+ * @property **extensions** - RegExp to match asset file extensions for preloading _(**Default:** woff2? | ttf | otf | midi? | ogg | mp3 | png | jpe?g | gif | svg | webp | mp4 | webm)._
+ * @property **preloadAll** - Enable preloading of ALL files in bundle with matching extensions _(**Default:** false. Intended for debugging purposes only, use with caution!)._
+ * @property **verbose** - Enable detailed logging for debugging _(**Default:** false)._
  */
 export interface AutoPreloadOptions {
   maxSizeKB?: number
@@ -73,8 +74,9 @@ export default function autoPreload(
 
       // Looks for assets in the bundle
       if (preloadAll) {
-        // Lookup for all assets in bundle
-        log('⚙️  Full-scan: will scan every asset (⚠️ Use ONLY for debugging!)')
+        // This option is intended for debugging purposes only, use with caution!
+        // Lookup for all assets in bundle (may include all assets from all chunks)
+        log('⚙️  Full-scan: will scan every asset (⚠️ Use with caution! This is meant for debugging only.)')
         Object.entries(bundle).forEach(([fileName, file]) => {
           if (file.type === 'asset' && extensions.test(fileName)) {
             usedAssets.add(fileName)
@@ -82,7 +84,7 @@ export default function autoPreload(
           } else log('🔍 Asset (full-scan):', fileName, '(❌ Skipped, blacklisted)')
         })
       } else {
-        // Lookup for assets in initial chunks only
+        // Lookup for assets imported by initial chunks only
         const initialChunks = Object.values(bundle)
           .filter((file) => {
             if (file.type === 'chunk' && html.includes(file.fileName)) return true

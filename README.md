@@ -51,6 +51,16 @@ export default {
   - Default: `/\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|mp4|webm)$/i`
   - Description: RegExp to match asset file extensions.
 
+- `preloadAll`
+  - Type: `boolean`
+  - Default: `false`
+  - Description: Enable preloading of ALL files in bundle with matching extensions. Intended for debugging purposes only, use with caution!
+
+- `verbose`
+  - Type: `boolean`
+  - Default: `false`
+  - Description: Enable detailed logging for debugging.
+
 ## How it works
 
 - During the Vite build, the plugin scans the final HTML for referenced JS and CSS files.
@@ -84,7 +94,7 @@ If `main.js` imports `font.woff2` and `styles.css` references `image.png`, the p
 
 **Q: Why isn't my image in the public folder being preloaded?**
 
-***A:** The plugin targets bundled assets for optimal performance. Public assets are copied as-is without hashing or optimization. To preload your image, move it to an assets folder and reference it with a relative path (e.g., import img from './assets/my-image.png'; or `<img src="./assets/my-image.png" />` in templates). This enables Vite to process it fully—see Vite's asset handling docs for details.*
+***A:** The plugin targets bundled assets for optimal performance. Public assets are copied as-is without hashing or optimization. To preload your image, move it to an assets folder and reference it with a relative path (e.g., import img from './assets/my-image.png'; or `<img src="./assets/my-image.png" />` in templates). This enables Vite to process it fully — see Vite's asset handling docs for details.*
 
 **Q: I'm using absolute paths like url('/images/bg.png') — how do I switch to bundled?**
 
@@ -96,9 +106,9 @@ If `main.js` imports `font.woff2` and `styles.css` references `image.png`, the p
 
 ## License
 
-MIT
+[MIT](https://github.com/ErikGS/vite-content-preload/?tab=MIT-1-ov-file)
 
----
+-
 
 Made with ❤️ and ☕ by [Erik GS](https://github.com/ErikGS)
 

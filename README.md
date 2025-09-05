@@ -33,7 +33,9 @@ export default {
   plugins: [
     autoPreload({
       maxSizeKB: 200, // Only preload assets up to 200KB (default)
-      extensions: /\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|mp4|webm)$/i // File types to preload (default)
+      extensions: /\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|mp4|webm)$/i, // File types to preload (default)
+      preloadAll: false, // Prelaod only from initial chunks (default and recommended)
+      verbose: false // Minimal logging (default)
     })
   ]
 }
@@ -108,7 +110,7 @@ If `main.js` imports `font.woff2` and `styles.css` references `image.png`, the p
 
 [MIT](https://github.com/ErikGS/vite-content-preload/?tab=MIT-1-ov-file)
 
--
+## About
 
 Made with ❤️ and ☕ by [Erik GS](https://github.com/ErikGS)
 

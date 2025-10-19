@@ -115,3 +115,7 @@ If `main.js` imports `font.woff2` and `styles.css` references `image.png`, the p
 Made with ❤️ and ☕ by [Erik GS](https://github.com/ErikGS)
 
 💖 Support my work → [Sponsor me on GitHub](https://github.com/sponsors/ErikGS)
+
+## Metrics
+
+![Alt](https://repobeats.axiom.co/api/embed/b5820979d569d6adcec77d4cc4ecb44717c2606b.svg "Repobeats analytics image")
